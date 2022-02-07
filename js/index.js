@@ -684,6 +684,14 @@ document.addEventListener("keydown", function(event) {
     if (!prevmask) return
 
     curimgCtx.save()
+    curimgCtx.beginPath()
+
+    curimgCtx.rect(0, 0, curimgCanvas.width, curimgCanvas.height)
+    curimgCtx.strokeStyle = 'rgb(255, 255, 255)'
+    curimgCtx.fillStyle = '#FF0000FF'
+    curimgCtx.restore()
+
+    curimgCtx.save()
     curimgCtx.globalCompositeOperation = 'destination-out'
     curimgCtx.beginPath()
     curimgCtx.drawImage(prevmask.canvas, 0, 0)
