@@ -423,7 +423,23 @@ window.onload = function() {
         Math.round(imgscale * _width),
         Math.round(imgscale * _height)
       )
-      lassoCtx.fill()
+
+      // lassoCtx.moveTo(
+      //   Math.round(imgscale * (_startX - clientOffset.x)),
+      //   Math.round(imgscale * (_startY - clientOffset.y)))
+      // lassoCtx.lineTo(
+      //   Math.round(imgscale * (_startX - clientOffset.x + _width + 50)),
+      //   Math.round(imgscale * (_startY - clientOffset.y)))
+      // lassoCtx.lineTo(
+      //   Math.round(imgscale * (_startX - clientOffset.x + _width)),
+      //   Math.round(imgscale * (_startY - clientOffset.y + _height)))   
+      // lassoCtx.lineTo(
+      //   Math.round(imgscale * (_startX - clientOffset.x)),
+      //   Math.round(imgscale * (_startY - clientOffset.y + _height)))        
+      // lassoCtx.lineTo(
+      //   Math.round(imgscale * (_startX - clientOffset.x)),
+      //   Math.round(imgscale * (_startY - clientOffset.y + 70)))             
+      // lassoCtx.fill()
 
       // curimgCtx.drawImage(lassoCanvas, 0, 0)
       // redraw()
@@ -538,7 +554,7 @@ window.onload = function() {
       Math.round(imgscale * (firstPt.x - clientOffset.x)),
       Math.round(imgscale * (firstPt.y - clientOffset.y)))
     isDrawingMode = false
-    lassoCtx.closePath()
+    // lassoCtx.closePath()
     lassoCtx.fill()
     ClearCanvas(selectionCtx)
       // document.getElementById('display-image').src = lassoCanvas.toDataURL()
@@ -684,6 +700,7 @@ document.addEventListener("keydown", function(event) {
     if (!prevmask) return
 
     curimgCtx.save()
+    curimgCtx.globalCompositeOperation = 'destination-out'
     curimgCtx.beginPath()
 
     curimgCtx.rect(0, 0, curimgCanvas.width, curimgCanvas.height)
@@ -854,31 +871,56 @@ function addMask(_newmask, _prevmask) {
 }
 
 function intersectMask(_newmask, _prevmask) {
-  var resCanvas1 = $("<canvas>")
-    .attr("width", curimgCanvas.width)
-    .attr("height", curimgCanvas.height)[0],
-    resCtx1 = resCanvas1.getContext('2d')
-  resCtx1.drawImage(_prevmask.canvas, 0, 0)
-  resCtx1.globalCompositeOperation = 'destination-out'
-  resCtx1.beginPath()
-  resCtx1.drawImage(_newmask.canvas, 0, 0)
-
   var resCanvas2 = $("<canvas>")
     .attr("width", curimgCanvas.width)
     .attr("height", curimgCanvas.height)[0],
     resCtx2 = resCanvas2.getContext('2d')
-  resCtx2.drawImage(_prevmask.canvas, 0, 0)
-  resCtx2.globalCompositeOperation = 'destination-out'
-  resCtx2.beginPath()
-  resCtx2.drawImage(resCanvas1, 0, 0)
 
   var _prebound = _prevmask.bounds
   var _newbound = _newmask.bounds
+  var minX = Math.max(Math.max(_prebound.minX, _newbound.minX), 0)
+  var maxX = Math.max(Math.min(_prebound.maxX, _newbound.maxX), 0)
+  var minY = Math.max(Math.max(_prebound.minY, _newbound.minY), 0)
+  var maxY = Math.max(Math.min(_prebound.maxY, _newbound.maxY), 0)
+  var imgData_new = _newmask.context.getImageData(0, 0, _newmask.canvas.width, _newmask.canvas.height)
+  var imgData_old = _prevmask.context.getImageData(0, 0, _prevmask.canvas.width, _prevmask.canvas.height)
+	var data_new = imgData_new.data,
+		w = imgData_new.width,
+		h = imgData_new.height
+  var data_old = imgData_old.data;
+	for(i = minY; i < maxY; i++) {
+		for(j = minX; j < maxX; j++) {
+			var index = i * w + j;
+			if(data_new[4 * index] == 255 && data_old[4 * index] == 255) {
+				resCtx2.fillRect(j, i, 1, 1);			
+      }
+		}
+	}
+
+  // var resCanvas1 = $("<canvas>")
+  //   .attr("width", curimgCanvas.width)
+  //   .attr("height", curimgCanvas.height)[0],
+  //   resCtx1 = resCanvas1.getContext('2d')
+  // resCtx1.drawImage(_prevmask.canvas, 0, 0)
+  // resCtx1.globalCompositeOperation = 'destination-out'
+  // resCtx1.beginPath()
+  // resCtx1.drawImage(_newmask.canvas, 0, 0)
+
+  // var resCanvas2 = $("<canvas>")
+  //   .attr("width", curimgCanvas.width)
+  //   .attr("height", curimgCanvas.height)[0],
+  //   resCtx2 = resCanvas2.getContext('2d')
+  // resCtx2.drawImage(_prevmask.canvas, 0, 0)
+  // resCtx2.globalCompositeOperation = 'destination-out'
+  // resCtx2.beginPath()
+  // resCtx2.drawImage(resCanvas1, 0, 0)
+  // var _prebound = _prevmask.bounds
+  // var _newbound = _newmask.bounds
   return {
     canvas: resCanvas2,
     context: resCtx2,
     bounds: {
-      minX: Math.max(_prebound.minX, _newbound.minX),
+      minX: Math.max(Math.max(_prebound.minX, _newbound.minX), 0),
       maxX: Math.min(_prebound.maxX, _newbound.maxX),
       minY: Math.max(_prebound.minY, _newbound.minY),
       maxY: Math.min(_prebound.maxY, _newbound.maxY)
